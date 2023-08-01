@@ -5,7 +5,7 @@ import { formatEther, formatUnits, parseEther } from "viem";
 import CustomDialog from "./dialogs/CustomDialog";
 import { ILiquidation, IReturnValueOfAllowance, IReturnValueOfBalance } from "../utils/interfaces";
 import FilledButton from "./buttons/FilledButton";
-import { DELAY_TIME, IN_PROGRESS, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS, USDC_DECIMAL } from "../utils/constants";
+import { DELAY_TIME, IN_PROGRESS, MESSAGE_RETRY_TX, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS, USDC_DECIMAL } from "../utils/constants";
 
 // ---------------------------------------------------------------------------------------------
 
@@ -144,8 +144,12 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
   //  ---------------------------------------------------------------------------
 
   const handleUsdcLiquidate = () => {
-    if (approvedUsdc >= usdcAmountToPay && liquidate) {
-      liquidate()
+    if (approvedUsdc >= usdcAmountToPay) {
+      if (liquidate) {
+        liquidate()
+      } else {
+        toast.info(MESSAGE_RETRY_TX)
+      }
     } else {
       setApproved(false)
       toast.warn(`Please approve more USDC.`)
@@ -156,7 +160,6 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
 
   //  Get totalBorrow and totalDeposit of the liquidation
   useEffect(() => {
-    console.log('>>>>>>>>>> liquidation => ', liquidation)
     if (liquidation) {
       setEthAmountToPay(Number(formatEther(liquidation.ethBorrowAmount + liquidation.ethInterestAmount)))
       if (Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) === 0) {
