@@ -1,14 +1,14 @@
-import { ChangeEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, useMemo, useState } from "react";
 import Slider from "rc-slider";
 import { toast } from "react-toastify";
-import { formatEther, formatUnits, parseEther } from "viem";
-import { useAccount, useContractRead, useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
+import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
+import { useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
 import MainInput from "../../../components/form/MainInput";
-import { APY_DECIMAL, IN_PROGRESS, MESSAGE_RETRY_TX, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, REGEX_NUMBER_VALID, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS, USDC_DECIMAL } from "../../../utils/constants";
+import { APY_DECIMAL, DELAY_TIME, IN_PROGRESS, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, REGEX_NUMBER_VALID, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS } from "../../../utils/constants";
 import OutlinedButton from "../../../components/buttons/OutlinedButton";
 import FilledButton from "../../../components/buttons/FilledButton";
 import MoreInfo from "./MoreInfo";
-import { IAsset, IBalanceData, IPoolInfo, IReturnValueOfAllowance, IUserInfo } from "../../../utils/interfaces";
+import { IAsset, IBalanceData, IPoolInfo, IUserInfo } from "../../../utils/interfaces";
 
 //  ----------------------------------------------------------------------------------------------------
 
@@ -25,35 +25,30 @@ interface IProps {
 export default function DepositTab({ asset, setVisible, balanceData, userInfo, poolInfo }: IProps) {
   const [amount, setAmount] = useState<string>('0')
   const [moreInfoCollapsed, setMoreInfoCollapsed] = useState<boolean>(false)
-  const [approved, setApproved] = useState<boolean>(false)
-  // const [approveIsLoadingDelayed, setApproveIsLoadingDelayed] = useState<boolean>(false)
-
-  //  -----------------------------------------------------
-
-  const { address } = useAccount()
-
-  //  -----------------------------------------------------
-
-  const amountToDeposit = useMemo<number>(() => {
-    return Number(amount) * 10 ** Number(balanceData?.decimals)
-  }, [asset, amount, balanceData])
+  const [loading, setLoading] = useState<boolean>(false)
 
   //  -----------------------------------------------------
 
   //  Deposit
-  const { config: depositConfig, isSuccess: depositIsPrepared } = usePrepareContractWrite({
+  const { config: depositConfig, refetch: rePrepareDeposit } = usePrepareContractWrite({
     address: POOL_CONTRACT_ADDRESS,
     abi: POOL_CONTRACT_ABI,
     functionName: 'deposit',
-    args: [asset.contractAddress, amountToDeposit],
-    value: asset.symbol === 'eth' ? parseEther(`${Number(amount)}`) : parseEther('0')
+    args: [asset.contractAddress, parseUnits(amount, asset.decimals)],
+    value: asset.symbol === 'eth' ? parseEther(`${Number(amount)}`) : parseEther('0'),
   })
-  const { write: deposit, data: depositData } = useContractWrite(depositConfig);
-  const { isLoading: depositIsLoading } = useWaitForTransaction({
+  const { write: deposit, data: depositData } = useContractWrite({ ...depositConfig, onError: () => { setLoading(false) } });
+  useWaitForTransaction({
     hash: depositData?.hash,
     onSuccess: () => {
-      toast.success('Deposited.');
-      setVisible(false);
+      setTimeout(() => {
+        toast.success('Deposited.');
+        setLoading(false)
+        setVisible(false);
+      }, DELAY_TIME)
+    },
+    onError: () => {
+      setLoading(false)
     }
   })
 
@@ -62,27 +57,29 @@ export default function DepositTab({ asset, setVisible, balanceData, userInfo, p
     address: USDC_CONTRACT_ADDRESS,
     abi: USDC_CONTRACT_ABI,
     functionName: 'approve',
-    args: [POOL_CONTRACT_ADDRESS, Number(amount) * 10 ** Number(balanceData?.decimals)]
-  })
-  const { write: approve, data: approveData } = useContractWrite(approveConfig);
-  const { isLoading: approveIsLoading } = useWaitForTransaction({
-    hash: approveData?.hash,
-    onSuccess: () => {
-      setApproved(true)
-    },
+    args: [POOL_CONTRACT_ADDRESS, Number(amount) * 10 ** Number(balanceData?.decimals)],
     onError: () => {
-      setApproved(false)
-      toast.error('Approve occurred error.')
+      setLoading(false)
     }
   })
-
-  //  Get approved USDC
-  const { data: approvedUsdcInBigint }: IReturnValueOfAllowance = useContractRead({
-    address: USDC_CONTRACT_ADDRESS,
-    abi: USDC_CONTRACT_ABI,
-    functionName: 'allowance',
-    args: [address, POOL_CONTRACT_ADDRESS],
-    watch: true
+  const { write: approve, data: approveData } = useContractWrite({ ...approveConfig, onError: () => { setLoading(false) } });
+  useWaitForTransaction({
+    hash: approveData?.hash,
+    onSuccess: () => {
+      setTimeout(async () => {
+        await rePrepareDeposit()
+        if (deposit) {
+          deposit()
+        } else {
+          toast.warn(`Please approve ${amount} USDC.`)
+          setLoading(false)
+        }
+      }, DELAY_TIME)
+    },
+    onError: () => {
+      toast.error('Approve occurred error.')
+      setLoading(false)
+    }
   })
 
   //  -----------------------------------------------------
@@ -105,13 +102,6 @@ export default function DepositTab({ asset, setVisible, balanceData, userInfo, p
     return 0
   }, [poolInfo])
 
-  const approvedUsdc = useMemo(() => {
-    if (approvedUsdcInBigint) {
-      return Number(formatUnits(approvedUsdcInBigint, USDC_DECIMAL))
-    }
-    return 0
-  }, [approvedUsdcInBigint])
-
   const amountInNumberType = useMemo<string>(() => {
     if (amount[0] === '0') {
       if (amount[1] !== '.')
@@ -121,19 +111,6 @@ export default function DepositTab({ asset, setVisible, balanceData, userInfo, p
   }, [amount])
 
   //  -----------------------------------------------------
-
-  const handleUsdcDeposit = () => {
-    if (approvedUsdc >= Number(amount)) {
-      if (deposit) {
-        deposit()
-      } else {
-        toast.info(MESSAGE_RETRY_TX)
-      }
-    } else {
-      setApproved(false)
-      toast.warn(`Please approve ${Number(amount)} USDC.`)
-    }
-  }
 
   const handleAmount = (e: ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
@@ -150,26 +127,6 @@ export default function DepositTab({ asset, setVisible, balanceData, userInfo, p
   }
 
   //  -----------------------------------------------------
-
-  useEffect(() => {
-    if (asset.symbol === 'usdc') {
-      if (depositIsPrepared) {
-        setApproved(true)
-      } else {
-        setApproved(false)
-      }
-    }
-  }, [depositIsPrepared, asset.symbol])
-
-  // useEffect(() => {
-  //   if (approveIsLoading) {
-  //     setApproveIsLoadingDelayed(true)
-  //   } else {
-  //     setTimeout(() => {
-  //       setApproveIsLoadingDelayed(false)
-  //     }, DELAY_TIME)
-  //   }
-  // }, [approveIsLoading])
 
   return (
     <>
@@ -236,31 +193,29 @@ export default function DepositTab({ asset, setVisible, balanceData, userInfo, p
         {asset.symbol === 'eth' ? (
           <FilledButton
             className="mt-8 py-2 text-base"
-            disabled={!deposit || !amountIsValid || depositIsLoading}
-            onClick={() => deposit?.()}
+            disabled={!deposit || !amountIsValid || loading}
+            onClick={() => {
+              if (deposit) {
+                setLoading(true)
+                deposit()
+              }
+            }}
           >
-            {depositIsLoading ? IN_PROGRESS : "Deposit"}
+            {loading ? IN_PROGRESS : "Deposit"}
           </FilledButton>
         ) : (
-          <>
-            {approved ? (
-              <FilledButton
-                className="mt-8 py-2 text-base"
-                disabled={!amountIsValid || depositIsLoading}
-                onClick={() => handleUsdcDeposit()}
-              >
-                {depositIsLoading ? IN_PROGRESS : "Deposit"}
-              </FilledButton>
-            ) : (
-              <FilledButton
-                className="mt-8 py-2 text-base"
-                disabled={!approve || !amountIsValid || approveIsLoading}
-                onClick={() => approve?.()}
-              >
-                {approveIsLoading ? IN_PROGRESS : 'Approve'}
-              </FilledButton>
-            )}
-          </>
+          <FilledButton
+            className="mt-8 py-2 text-base"
+            disabled={!approve || !amountIsValid || loading}
+            onClick={() => {
+              if (approve) {
+                setLoading(true)
+                approve()
+              }
+            }}
+          >
+            {loading ? IN_PROGRESS : 'Deposit'}
+          </FilledButton>
         )}
 
         {moreInfoCollapsed && (

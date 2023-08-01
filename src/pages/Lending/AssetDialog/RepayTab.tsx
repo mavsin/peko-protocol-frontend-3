@@ -1,14 +1,14 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import Slider from "rc-slider";
 import { toast } from "react-toastify";
-import { formatEther, formatUnits, parseEther } from "viem";
-import { useAccount, useContractRead, useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
+import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
+import { useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
 import MainInput from "../../../components/form/MainInput";
-import { IN_PROGRESS, MESSAGE_RETRY_TX, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, REGEX_NUMBER_VALID, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS, USDC_DECIMAL } from "../../../utils/constants";
+import { DELAY_TIME, IN_PROGRESS, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, REGEX_NUMBER_VALID, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS, USDC_DECIMAL } from "../../../utils/constants";
 import OutlinedButton from "../../../components/buttons/OutlinedButton";
 import FilledButton from "../../../components/buttons/FilledButton";
 import MoreInfo from "./MoreInfo";
-import { IAsset, IBalanceData, IReturnValueOfAllowance, IUserInfo } from "../../../utils/interfaces";
+import { IAsset, IBalanceData, IUserInfo } from "../../../utils/interfaces";
 
 //  ----------------------------------------------------------------------------------------------------
 
@@ -25,16 +25,7 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
   const [amount, setAmount] = useState<string>('0')
   const [moreInfoCollapsed, setMoreInfoCollapsed] = useState<boolean>(false)
   const [maxAmount, setMaxAmount] = useState<string>('0');
-  const [approved, setApproved] = useState<boolean>(false);
-  // const [approveIsLoadingDelayed, setApproveIsLoadingDelayed] = useState<boolean>(false)
-
-  const { address } = useAccount()
-
-  //  --------------------------------------------------------------------------
-
-  const amountToRepay = useMemo<number>(() => {
-    return Number(amount) * 10 ** Number(balanceData?.decimals)
-  }, [asset, amount])
+  const [loading, setLoading] = useState<boolean>(false)
 
   //  --------------------------------------------------------------------------
 
@@ -45,43 +36,46 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
     functionName: 'approve',
     args: [POOL_CONTRACT_ADDRESS, Number(amount) * 10 ** Number(balanceData?.decimals)]
   })
-  const { write: approve, data: approveData } = useContractWrite(approveConfig);
-  const { isLoading: approveIsLoading } = useWaitForTransaction({
+  const { write: approve, data: approveData } = useContractWrite({ ...approveConfig, onError: () => { setLoading(false) } });
+  useWaitForTransaction({
     hash: approveData?.hash,
     onSuccess: () => {
-      setApproved(true)
+      setTimeout(async () => {
+        await rePrepareRepay()
+        if (repay) {
+          repay()
+        } else {
+          toast.warn(`Please approve ${maxAmount} USDC.`)
+          setLoading(false)
+        }
+      }, DELAY_TIME)
     },
     onError: () => {
-      setApproved(false)
+      setLoading(false)
       toast.error('Approve occured error.')
     }
   })
 
-  //  Get approved USDC
-  const { data: approvedUsdcInBigint }: IReturnValueOfAllowance = useContractRead({
-    address: USDC_CONTRACT_ADDRESS,
-    abi: USDC_CONTRACT_ABI,
-    functionName: 'allowance',
-    args: [address, POOL_CONTRACT_ADDRESS],
-    watch: true
-  })
-
   //  Repay
-  const { config: repayConfig, error: errorOfRepayPrepare, isSuccess: repayIsPrepared } = usePrepareContractWrite({
+  const { config: repayConfig, refetch: rePrepareRepay } = usePrepareContractWrite({
     address: POOL_CONTRACT_ADDRESS,
     abi: POOL_CONTRACT_ABI,
     functionName: 'repay',
-    args: [asset.contractAddress, amountToRepay],
+    args: [asset.contractAddress, parseUnits(amount, asset.decimals)],
     value: asset.symbol === 'eth' ? parseEther(`${Number(amount)}`) : parseEther('0')
   })
-  const { write: repay, data: repayData } = useContractWrite(repayConfig)
-  const { isLoading: repayIsLoading, isError: repayIsError } = useWaitForTransaction({
+  const { write: repay, data: repayData } = useContractWrite({ ...repayConfig, onError: () => { setLoading(false) } })
+  useWaitForTransaction({
     hash: repayData?.hash,
     onSuccess: () => {
-      toast.success('Repaid.')
-      setVisible(false)
+      setTimeout(() => {
+        toast.success('Repaid.')
+        setLoading(false)
+        setVisible(false)
+      }, DELAY_TIME)
     },
     onError: () => {
+      setLoading(false)
       toast.error('Repaying occured error')
     }
   })
@@ -108,26 +102,11 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
     setAmount(`${Number(value * Number(maxAmount) / 100).toFixed(6)}`)
   }
 
-  const handleUsdcRepay = () => {
-    if (approvedUsdc >= Number(amount)) {
-      if (repay) {
-        repay()
-      } else {
-        toast.info(MESSAGE_RETRY_TX)
-      }
-    } else {
-      setApproved(false)
-      toast.warn(`Please approve ${Number(amount)} USDC.`)
-    }
-  }
-
   //  --------------------------------------------------------------------------
 
   const amountIsValid = useMemo<boolean>(() => {
     const amountInNumber = Number(amount);
     const maxAmountInNumber = Number(maxAmount);
-    console.log('>>>>>>>>> amountInNumber => ', amountInNumber)
-    console.log('>>>>>>>>> maxAmountInNumber => ', maxAmountInNumber)
     if (amountInNumber !== 0) {
       if (amountInNumber <= maxAmountInNumber) {
         return true;
@@ -135,13 +114,6 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
     }
     return false;
   }, [amount, maxAmount])
-
-  const approvedUsdc = useMemo(() => {
-    if (approvedUsdcInBigint) {
-      return Number(formatUnits(approvedUsdcInBigint, USDC_DECIMAL))
-    }
-    return 0
-  }, [approvedUsdcInBigint])
 
   const amountInNumberType = useMemo<string>(() => {
     if (amount[0] === '0') {
@@ -154,18 +126,6 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
   //  --------------------------------------------------------------------------
 
   useEffect(() => {
-    if (repayIsError) {
-      toast.error('Borrow has been failed.')
-    }
-  }, [repayIsError])
-
-  useEffect(() => {
-    if (errorOfRepayPrepare) {
-      // toast.warn(`${errorOfRepayPrepare.cause}`)
-    }
-  }, [errorOfRepayPrepare])
-
-  useEffect(() => {
     if (userInfo) {
       if (asset.symbol === 'eth') {
         setMaxAmount(formatEther(userInfo.ethBorrowAmount + userInfo.ethInterestAmount))
@@ -174,34 +134,6 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
       }
     }
   }, [userInfo])
-
-  // useEffect(() => {
-  //   if (asset.symbol === 'usdc') {
-  //     if (approvedUsdc > 0 && approvedUsdc >= Number(amount)) {
-  //       setApproved(true)
-  //     }
-  //   }
-  // }, [approvedUsdc, amount, asset])
-
-  useEffect(() => {
-    if (asset.symbol === 'usdc') {
-      if (repayIsPrepared) {
-        setApproved(true)
-      } else {
-        setApproved(false)
-      }
-    }
-  }, [repayIsPrepared, asset.symbol])
-
-  // useEffect(() => {
-  //   if (approveIsLoading) {
-  //     setApproveIsLoadingDelayed(true)
-  //   } else {
-  //     setTimeout(() => {
-  //       setApproveIsLoadingDelayed(false)
-  //     }, DELAY_TIME)
-  //   }
-  // }, [approveIsLoading])
 
   //  --------------------------------------------------------------------------
 
@@ -241,49 +173,27 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
           />
         </div>
 
-        {/* <div className="flex flex-col gap-2 text-sm mt-8">
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500">Deposited</span>
-            <span className="text-gray-100">0 USDC</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500">APY</span>
-            <span className="text-gray-100">1.19%</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-gray-500">Wallet</span>
-            <span className="text-gray-100">2.89039 USDC</span>
-          </div>
-        </div> */}
-
         {asset.symbol === 'eth' ? (
           <FilledButton
             className="mt-8 py-2 text-base"
-            disabled={!repay || !amountIsValid || repayIsLoading}
+            disabled={!repay || !amountIsValid || loading}
             onClick={() => repay?.()}
           >
-            {repayIsLoading ? IN_PROGRESS : "Repay"}
+            {loading ? IN_PROGRESS : "Repay"}
           </FilledButton>
         ) : (
-          <>
-            {approved ? (
-              <FilledButton
-                className="mt-8 py-2 text-base"
-                disabled={!amountIsValid || repayIsLoading}
-                onClick={() => handleUsdcRepay()}
-              >
-                {repayIsLoading ? IN_PROGRESS : "Repay"}
-              </FilledButton>
-            ) : (
-              <FilledButton
-                className="mt-8 py-2 text-base"
-                disabled={!approve || !amountIsValid || approveIsLoading}
-                onClick={() => approve?.()}
-              >
-                {approveIsLoading ? IN_PROGRESS : 'Approve'}
-              </FilledButton>
-            )}
-          </>
+          <FilledButton
+            className="mt-8 py-2 text-base"
+            disabled={!approve || !amountIsValid || loading}
+            onClick={() => {
+              if (approve) {
+                setLoading(true)
+                approve()
+              }
+            }}
+          >
+            {loading ? IN_PROGRESS : "Repay"}
+          </FilledButton>
         )}
 
         {moreInfoCollapsed && (
