@@ -41,11 +41,9 @@ export default function DepositTab({ asset, setVisible, balanceData, userInfo, p
   useWaitForTransaction({
     hash: depositData?.hash,
     onSuccess: () => {
-      setTimeout(() => {
-        toast.success('Deposited.');
-        setLoading(false)
-        setVisible(false);
-      }, DELAY_TIME)
+      toast.success('Deposited.');
+      setLoading(false)
+      setVisible(false);
     },
     onError: () => {
       setLoading(false)

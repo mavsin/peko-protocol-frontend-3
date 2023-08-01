@@ -68,11 +68,9 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
   useWaitForTransaction({
     hash: repayData?.hash,
     onSuccess: () => {
-      setTimeout(() => {
-        toast.success('Repaid.')
-        setLoading(false)
-        setVisible(false)
-      }, DELAY_TIME)
+      toast.success('Repaid.')
+      setLoading(false)
+      setVisible(false)
     },
     onError: () => {
       setLoading(false)
@@ -133,7 +131,7 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
         setMaxAmount(formatUnits(userInfo.usdtBorrowAmount + userInfo.usdtInterestAmount, USDC_DECIMAL))
       }
     }
-  }, [userInfo])
+  }, [userInfo, asset])
 
   //  --------------------------------------------------------------------------
 

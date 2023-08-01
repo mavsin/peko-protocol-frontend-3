@@ -37,15 +37,21 @@ export default function Liquidate() {
   //  ----------------------------------------------------------------
 
   //  Get listOfUsers
-  const { data: listOfUsers }: IReturnValueOfListOfUsers = useContractRead({
+  const { data: listOfUsers, refetch: refetchListOfUsers }: IReturnValueOfListOfUsers = useContractRead({
     address: POOL_CONTRACT_ADDRESS,
     abi: POOL_CONTRACT_ABI,
     functionName: 'listUserInfo',
     args: [currentPage],
     watch: true,
     onSuccess: () => {
+      console.log('>>>>>>>>>>>> numberOfPages => ', numberOfPages)
+      console.log('>>>>>>>>>>>> currentPage => ', currentPage)
       if (numberOfPages > currentPage) {
         setCurrentPage(currentPage + 1)
+        refetchListOfUsers()
+      } else {
+        setCurrentPage(0)
+        refetchListOfUsers()
       }
     }
   })
@@ -83,6 +89,8 @@ export default function Liquidate() {
     watch: true
   })
 
+  console.log('>>>>>>>>>>> numberOfUsersInBigint => ', numberOfUsersInBigint)
+
   //  ----------------------------------------------------------------
   //  The price of 1 ETH in USD
   const ethPriceInUsd = useMemo<number>(() => {
@@ -119,6 +127,9 @@ export default function Liquidate() {
   const numberOfPages = useMemo<number>(() => {
     return Math.ceil(numberOfUsers / 100)
   }, [numberOfUsers])
+
+  console.log('>>>>>>>>> numberOfPages => ', numberOfPages)
+  console.log('>>>>>>>>>>>> currentPage => ', currentPage)
 
   //  ----------------------------------------------------------------
 
