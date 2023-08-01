@@ -95,8 +95,6 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
     }
   })
 
-  console.log('>>>>>>>>>> parseEther(`${ethAmountToPay}`) => ', parseEther(`${ethAmountToPay}`))
-
   //  ---------------------------------------------------------------------------
 
   //  Eth amount of wallet
@@ -158,6 +156,7 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
 
   //  Get totalBorrow and totalDeposit of the liquidation
   useEffect(() => {
+    console.log('>>>>>>>>>> liquidation => ', liquidation)
     if (liquidation) {
       setEthAmountToPay(Number(formatEther(liquidation.ethBorrowAmount + liquidation.ethInterestAmount)))
       if (Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) === 0) {
@@ -206,7 +205,7 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
                     <img src="/assets/images/ethereum.png" alt="" className="w-10" />
-                    {/* <span className="text-gray-100 text-lg">{ethAmountToPay} ETH</span> */}
+                    <span className="text-gray-100 text-lg">{ethAmountToPay} ETH</span>
                   </div>
                   {!ethIsSufficient && (
                     <span className="text-red-500">Insufficient ETH balance</span>
