@@ -53,6 +53,7 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
 
   //  --------------------------------------------------------------------
 
+  //  Max amount to withdraw
   const maxAmount = useMemo<number>(() => {
     if (userInfo) {
       let depositTokenAmount = 0
@@ -76,6 +77,7 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
     return 0
   }, [maxAmountInUsd, userInfo])
 
+  //  Amount in number type string
   const amountInNumberType = useMemo<string>(() => {
     if (amount[0] === '0') {
       if (amount[1] !== '.')
@@ -84,12 +86,29 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
     return amount
   }, [amount])
 
+  //  The profit of the pool
   const poolProfit = useMemo<number>(() => {
     if (poolProfitInBigint) {
       return Number(formatUnits(poolProfitInBigint, asset.decimals))
     }
     return 0
   }, [poolProfitInBigint])
+
+  //  Return true if profit < reward
+  const poolIsInsufficient = useMemo<boolean>(() => {
+    let reward = 0;
+    if (userInfo) {
+      if (asset.symbol === 'eth') {
+        reward = Number(formatEther(userInfo.ethRewardAmount))
+      } else {
+        reward = Number(formatUnits(userInfo.usdtRewardAmount, asset.decimals));
+      }
+      if (poolProfit < reward) {
+        return true
+      }
+    }
+    return false
+  }, [poolProfit, userInfo])
 
   //  --------------------------------------------------------------------
 
@@ -189,7 +208,7 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
             <OutlinedButton className="text-xs px-2 py-1" onClick={handleMax}>max</OutlinedButton>
           </div>
         </div>
-        {poolProfit <= 0 && (
+        {poolIsInsufficient && (
           <p className="text-red-500">You can't withdraw any fund since the profit of the pool is insufficient.</p>
         )}
 

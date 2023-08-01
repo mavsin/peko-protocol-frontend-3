@@ -159,8 +159,6 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
   //  Get totalBorrow and totalDeposit of the liquidation
   useEffect(() => {
     if (liquidation) {
-      console.log('>>>>>>>>>> liquidation => ', liquidation)
-      console.log('>>>>>>>>>> Number(formatEther(liquidation.ethBorrowAmount + liquidation.ethInterestAmount)) => ', Number(formatEther(liquidation.ethBorrowAmount + liquidation.ethInterestAmount)))
       setEthAmountToPay(Number(formatEther(liquidation.ethBorrowAmount + liquidation.ethInterestAmount)))
       if (Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) === 0) {
         setUsdcAmountToPay(Number((Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) / 0.9999).toFixed(6)))
