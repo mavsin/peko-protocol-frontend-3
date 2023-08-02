@@ -8,7 +8,7 @@ import Th from "../../../components/tableComponents/Th";
 import Section from "../../../components/Section";
 import Td from "../../../components/tableComponents/Td";
 import { IUserInfo } from "../../../utils/interfaces";
-import { MESSAGE_SWITCH_NETWORK, PEKO_CONTRACT_ADDRESS, PEKO_DECIMAL, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS } from "../../../utils/constants";
+import { ERROR_MESSAGE_OF_CLAIM_PEKO, MESSAGE_SWITCH_NETWORK, PEKO_CONTRACT_ADDRESS, PEKO_DECIMAL, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS } from "../../../utils/constants";
 import FilledButton from "../../../components/buttons/FilledButton";
 // import ClaimPekoDialog from "./ClaimPekoDialog";
 
@@ -44,6 +44,12 @@ export default function PekoSection({ userInfo }: IProps) {
     address: POOL_CONTRACT_ADDRESS,
     abi: POOL_CONTRACT_ABI,
     functionName: 'claimPeko',
+    onError: (error) => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      if (errorObject.cause.reason === ERROR_MESSAGE_OF_CLAIM_PEKO) {
+        toast.warn("Pool hasn't enough PEKO.")
+      }
+    }
   })
   const { write: claimPeko, data: claimPekoData } = useContractWrite(configOfClaimPeko);
   const { isLoading: claimPekoIsLoading } = useWaitForTransaction({
@@ -58,14 +64,14 @@ export default function PekoSection({ userInfo }: IProps) {
 
   //  --------------------------------------------------------------------
 
-  const isValidClaim = useMemo<boolean>(() => {
-    if (pekoBalanceDataOfWallet) {
-      if (Number(pekoBalanceDataOfWallet.formatted) > 0) {
-        return true
-      }
-    }
-    return false
-  }, [pekoBalanceDataOfWallet])
+  // const isValidClaim = useMemo<boolean>(() => {
+  //   if (pekoBalanceDataOfWallet) {
+  //     if (Number(pekoBalanceDataOfWallet.formatted) > 0) {
+  //       return true
+  //     }
+  //   }
+  //   return false
+  // }, [pekoBalanceDataOfWallet])
 
   //  --------------------------------------------------------------------
 
@@ -107,7 +113,7 @@ export default function PekoSection({ userInfo }: IProps) {
             <div className="flex justify-between w-full">
               <span className="text-gray-500 font-bold">Oepration: </span>
               <FilledButton
-                disabled={!claimPeko || claimPekoIsLoading || !isValidClaim}
+                disabled={!claimPeko || claimPekoIsLoading}
                 onClick={() => handleClaimPeko()}
               >
                 Claim
@@ -142,7 +148,7 @@ export default function PekoSection({ userInfo }: IProps) {
               </Td>
               <Td>
                 <FilledButton
-                  disabled={!claimPeko || claimPekoIsLoading || !isValidClaim}
+                  disabled={!claimPeko || claimPekoIsLoading}
                   onClick={() => claimPeko?.()}
                 >
                   Claim

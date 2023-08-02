@@ -63,7 +63,6 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
   }, [amount])
 
   const maxAmount = useMemo<number>(() => {
-    console.log('>>>>>>>>> profitInBigint => ', profitInBigint)
     if (profitInBigint) {
       return Number(formatUnits(profitInBigint, asset.decimals))
     }

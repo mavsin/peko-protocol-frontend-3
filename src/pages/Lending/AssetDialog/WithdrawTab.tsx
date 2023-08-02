@@ -92,7 +92,7 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
       return Number(formatUnits(poolProfitInBigint, asset.decimals))
     }
     return 0
-  }, [poolProfitInBigint])
+  }, [poolProfitInBigint, asset])
 
   //  Return true if profit < reward
   const poolIsInsufficient = useMemo<boolean>(() => {
@@ -103,12 +103,14 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
       } else {
         reward = Number(formatUnits(userInfo.usdtRewardAmount, asset.decimals));
       }
+      console.log('>>>>>>>>> poolProfit => ', poolProfit)
+      console.log('>>>>>>>>> reward => ', reward)
       if (poolProfit < reward) {
         return true
       }
     }
     return false
-  }, [poolProfit, userInfo])
+  }, [poolProfit, userInfo, asset])
 
   //  --------------------------------------------------------------------
 

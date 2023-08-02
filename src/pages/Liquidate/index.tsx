@@ -44,8 +44,6 @@ export default function Liquidate() {
     args: [currentPage],
     watch: true,
     onSuccess: () => {
-      console.log('>>>>>>>>>>>> numberOfPages => ', numberOfPages)
-      console.log('>>>>>>>>>>>> currentPage => ', currentPage)
       if (numberOfPages > currentPage) {
         setCurrentPage(currentPage + 1)
         refetchListOfUsers()
@@ -89,8 +87,6 @@ export default function Liquidate() {
     watch: true
   })
 
-  console.log('>>>>>>>>>>> numberOfUsersInBigint => ', numberOfUsersInBigint)
-
   //  ----------------------------------------------------------------
   //  The price of 1 ETH in USD
   const ethPriceInUsd = useMemo<number>(() => {
@@ -127,9 +123,6 @@ export default function Liquidate() {
   const numberOfPages = useMemo<number>(() => {
     return Math.ceil(numberOfUsers / 100)
   }, [numberOfUsers])
-
-  console.log('>>>>>>>>> numberOfPages => ', numberOfPages)
-  console.log('>>>>>>>>>>>> currentPage => ', currentPage)
 
   //  ----------------------------------------------------------------
 

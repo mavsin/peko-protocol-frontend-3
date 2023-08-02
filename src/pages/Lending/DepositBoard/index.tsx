@@ -22,7 +22,6 @@ export default function DepositBoard({ userInfo, ethPriceInUsd, usdcPriceInUsd }
   const totalAmountInUsd = useMemo<number>(() => {
     const ethAmountInUsd = Number(formatEther(userInfo.ethDepositAmount + userInfo.ethRewardAmount)) * ethPriceInUsd;
     const usdcAmountInUsd = Number(formatUnits(userInfo.usdtDepositAmount + userInfo.usdtRewardAmount, USDC_DECIMAL)) * usdcPriceInUsd;
-    console.log('>>>>>>>>> ethAmountInUsd + usdcAmountInUsd => ', ethAmountInUsd + usdcAmountInUsd)
     return ethAmountInUsd + usdcAmountInUsd
   }, [userInfo])
 

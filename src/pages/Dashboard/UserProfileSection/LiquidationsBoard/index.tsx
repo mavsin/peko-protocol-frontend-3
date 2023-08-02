@@ -109,7 +109,6 @@ export default function LiquidationsBoard({ userInfo, ethPriceInUsd, usdcPriceIn
   //  -------------------------------------------------------------------------------
 
   useEffect(() => {
-    console.log('>>>>>>>>>> listOfUsers => ', listOfUsers)
     if (listOfUsers) {
       const _liquidations = [];
       for (let i = 0; i < listOfUsers.length; i += 1) {
