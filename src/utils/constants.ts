@@ -102,7 +102,7 @@ export const REGEX_NUMBER_VALID = /^[0-9]*\.?[0-9]*$/;
 
 //  Pool Info
 export const POOL_CONTRACT_ADDRESS =
-  "0x3e6b9a075ba6C31c90722457b4970d6aa2f121e9";
+  "0x5ca1bb694a6e898a960f614e4ec551c08a316e43";
 export const POOL_CONTRACT_ABI = [
   {
     inputs: [
@@ -154,6 +154,13 @@ export const POOL_CONTRACT_ABI = [
     type: "function"
   },
   {
+    inputs: [{ internalType: "uint256", name: "amount", type: "uint256" }],
+    name: "claimETH",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
     inputs: [],
     name: "claimPeko",
     outputs: [],
@@ -161,18 +168,18 @@ export const POOL_CONTRACT_ABI = [
     type: "function"
   },
   {
-    inputs: [
-      { internalType: "address", name: "_tokenAddress", type: "address" },
-      { internalType: "uint256", name: "_amount", type: "uint256" }
-    ],
-    name: "claimProfit",
+    inputs: [{ internalType: "uint256", name: "amount", type: "uint256" }],
+    name: "claimRewardToken",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"
   },
   {
-    inputs: [{ internalType: "uint256", name: "amount", type: "uint256" }],
-    name: "claimRewardToken",
+    inputs: [
+      { internalType: "address", name: "tokenAddress", type: "address" },
+      { internalType: "uint256", name: "amount", type: "uint256" }
+    ],
+    name: "claimToken",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"
@@ -251,15 +258,6 @@ export const POOL_CONTRACT_ABI = [
         type: "tuple"
       }
     ],
-    stateMutability: "view",
-    type: "function"
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "_tokenAddress", type: "address" }
-    ],
-    name: "getProfit",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function"
   },

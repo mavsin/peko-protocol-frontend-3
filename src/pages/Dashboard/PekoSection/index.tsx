@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { useAccount, useBalance, useContractWrite, useNetwork, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
 import { useMediaQuery } from "react-responsive";
 import { formatUnits } from "viem";
