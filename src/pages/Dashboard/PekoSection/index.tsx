@@ -45,7 +45,7 @@ export default function PekoSection({ userInfo }: IProps) {
     functionName: 'claimPeko',
     onError: (error) => {
       const errorObject = JSON.parse(JSON.stringify(error))
-      if (errorObject.cause.reason === ERROR_MESSAGE_OF_CLAIM_PEKO) {
+      if (errorObject?.cause?.reason === ERROR_MESSAGE_OF_CLAIM_PEKO) {
         toast.warn("Pool hasn't enough PEKO.")
       }
     }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAccount, useBalance, useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
 import { toast } from "react-toastify";
-import { formatEther, formatUnits, parseEther } from "viem";
+import { formatEther, formatUnits, parseEther, parseUnits } from "viem";
 import CustomDialog from "./dialogs/CustomDialog";
 import { ILiquidation, IReturnValueOfBalance } from "../utils/interfaces";
 import FilledButton from "./buttons/FilledButton";
@@ -24,6 +24,7 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
   const [ethAmountToGetPaid, setEthAmountToGetPaid] = useState<number>(0)
   const [usdcAmountToGetPaid, setUsdcAmountToGetPaid] = useState<number>(0)
   const [loading, setLoading] = useState<boolean>(false)
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   //  ---------------------------------------------------------------------------
 
@@ -50,7 +51,14 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
     abi: POOL_CONTRACT_ABI,
     functionName: 'liquidate',
     args: [liquidation?.accountAddress],
-    value: parseEther(`${ethAmountToPay}`)
+    value: parseEther(`${ethAmountToPay}`),
+    onError: (error) => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      console.log('>>>>>>>>>> errorObject => ', errorObject)
+      if (errorObject.cause) {
+        setErrorMessage(errorObject.cause.reason)
+      }
+    }
   })
   const { write: liquidate, data: liquidateData } = useContractWrite({ ...liquidateConfig, onError: () => { setLoading(false) } });
   useWaitForTransaction({
@@ -58,10 +66,16 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
     onSuccess: () => {
       toast.success('Liquidated.')
       setLoading(false)
+      setErrorMessage('')
       closeLiquidateDialog()
     },
-    onError: () => {
-      toast.error('Aprrove occured error.')
+    onError: (error) => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      if (errorObject.cause) {
+        setErrorMessage(errorObject.cause.reason)
+        toast.error(errorObject.cause.reason)
+        setErrorMessage(errorObject.cause.reason)
+      }
       setLoading(false)
     }
   })
@@ -71,25 +85,29 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
     address: USDC_CONTRACT_ADDRESS,
     abi: USDC_CONTRACT_ABI,
     functionName: 'approve',
-    args: [POOL_CONTRACT_ADDRESS, usdcAmountToPay * 10 ** USDC_DECIMAL],
+    args: [POOL_CONTRACT_ADDRESS, parseUnits(`${usdcAmountToPay}`, USDC_DECIMAL)],
   })
   const { write: approve, data: approveData } = useContractWrite({ ...approveConfig, onError: () => { setLoading(false) } });
   useWaitForTransaction({
     hash: approveData?.hash,
     onSuccess: () => {
       setTimeout(async () => {
-        await rePrepareLiquidate()
+        const resultOfRePrepare = await rePrepareLiquidate()
+
+        console.log('>>>>>>>>>>> resultOfRePrepare => ', resultOfRePrepare)
         if (liquidate) {
           liquidate()
         } else {
           setLoading(false)
-          toast.warn(`Please approve ${usdcAmountToPay} USDC.`)
+          toast.error(errorMessage)
         }
       }, DELAY_TIME)
     },
-    onError: () => {
+    onError: (error) => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      toast.error(errorObject.cause.reason)
+      setErrorMessage(errorObject.cause.reason)
       setLoading(false)
-      toast.error('Approve occured error.')
     }
   })
 
@@ -136,7 +154,7 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
   //  Get totalBorrow and totalDeposit of the liquidation
   useEffect(() => {
     if (liquidation) {
-      setEthAmountToPay(Number(formatEther(liquidation.ethBorrowAmount + liquidation.ethInterestAmount)))
+      setEthAmountToPay(Number(formatEther(liquidation.ethBorrowAmount + liquidation.ethInterestAmount)) / 0.9999)
       if (Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) === 0) {
         setUsdcAmountToPay(Number((Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) / 0.9999).toFixed(6)))
       } else {

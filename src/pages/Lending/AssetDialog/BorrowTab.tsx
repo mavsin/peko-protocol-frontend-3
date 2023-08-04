@@ -28,19 +28,34 @@ export default function BorrowTab({ asset, setVisible, balanceData, userInfo, po
   const [amount, setAmount] = useState<string>('0')
   const [moreInfoCollapsed, setMoreInfoCollapsed] = useState<boolean>(false)
   const [maxAmountInUsd, setMaxAmountInUsd] = useState<number>(0)
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   //  ----------------------------------------------------------------------------
 
   //  Borrow
-  const { config: borrowConfig, isSuccess: borrowPrepareIsSuccess, error: errorOfBorrowPrepare } = usePrepareContractWrite({
+  const { config: borrowConfig } = usePrepareContractWrite({
     address: POOL_CONTRACT_ADDRESS,
     abi: POOL_CONTRACT_ABI,
     functionName: 'borrow',
     args: [asset.contractAddress, Number(amount) * 10 ** asset.decimals],
+    onError: (error) => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      setErrorMessage(errorObject?.cause?.reason)
+    }
   })
   const { write: borrow, data: borrowData } = useContractWrite(borrowConfig)
-  const { isLoading: borrowIsLoading, isError: borrowIsError, isSuccess: borrowIsSuccess } = useWaitForTransaction({
-    hash: borrowData?.hash
+  const { isLoading: borrowIsLoading } = useWaitForTransaction({
+    hash: borrowData?.hash,
+    onSuccess: () => {
+      toast.success('Borrowed.')
+      setErrorMessage('')
+      setVisible(false)
+    },
+    onError: (error) => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      setErrorMessage(errorObject?.cause?.reason)
+      toast.error(errorObject?.cause?.reason)
+    }
   })
 
   //  ----------------------------------------------------------------------------
@@ -92,26 +107,15 @@ export default function BorrowTab({ asset, setVisible, balanceData, userInfo, po
     setAmount(`${(value * maxAmount / 100).toFixed(6)}`)
   }
 
+  const handleBorrow = () => {
+    if (borrow) {
+      borrow()
+    } else {
+      toast.error(errorMessage)
+    }
+  }
+
   //  ----------------------------------------------------------------------------
-
-  useEffect(() => {
-    if (borrowIsError) {
-      toast.error('Borrow has been failed.')
-    }
-  }, [borrowIsError])
-
-  useEffect(() => {
-    if (borrowIsSuccess) {
-      toast.success('Borrowed.')
-      setVisible(false)
-    }
-  }, [borrowIsSuccess])
-
-  useEffect(() => {
-    if (errorOfBorrowPrepare) {
-      // toast.warn(`${errorOfBorrowPrepare.cause}`)
-    }
-  }, [errorOfBorrowPrepare])
 
   //  Get max borrowable amount in USD
   useEffect(() => {
@@ -182,8 +186,8 @@ export default function BorrowTab({ asset, setVisible, balanceData, userInfo, po
 
       <FilledButton
         className="mt-8 py-2 text-base"
-        disabled={!borrowPrepareIsSuccess || borrowIsLoading}
-        onClick={() => borrow?.()}
+        disabled={borrowIsLoading}
+        onClick={handleBorrow}
       >
         {borrowIsLoading ? IN_PROGRESS : 'Borrow'}
       </FilledButton>

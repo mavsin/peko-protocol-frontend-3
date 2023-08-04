@@ -1,14 +1,14 @@
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 import Slider from "rc-slider";
 import { toast } from "react-toastify";
-import { useContractRead, useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
+import { useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
 import { formatEther, formatUnits } from "viem";
 import MainInput from "../../../components/form/MainInput";
 import { IN_PROGRESS, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, REGEX_NUMBER_VALID, USDC_DECIMAL } from "../../../utils/constants";
 import OutlinedButton from "../../../components/buttons/OutlinedButton";
 import FilledButton from "../../../components/buttons/FilledButton";
 import MoreInfo from "./MoreInfo";
-import { IAsset, IBalanceData, IPoolInfo, IReturnValueOfAllowance, IUserInfo } from "../../../utils/interfaces";
+import { IAsset, IBalanceData, IPoolInfo, IUserInfo } from "../../../utils/interfaces";
 
 //  ----------------------------------------------------------------------------------------------------
 
@@ -28,27 +28,34 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
   const [amount, setAmount] = useState<string>('0')
   const [moreInfoCollapsed, setMoreInfoCollapsed] = useState<boolean>(false)
   const [maxAmountInUsd, setMaxAmountInUsd] = useState<number>(0)
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   //  --------------------------------------------------------------------
 
-  const { data: poolProfitInBigint }: IReturnValueOfAllowance = useContractRead({
-    address: POOL_CONTRACT_ADDRESS,
-    abi: POOL_CONTRACT_ABI,
-    functionName: 'getProfit',
-    args: [asset.contractAddress],
-    watch: true
-  })
-
   //  Withdraw
-  const { config: withdrawConfig, isSuccess: withdrawPrepareIsSuccess } = usePrepareContractWrite({
+  const { config: withdrawConfig } = usePrepareContractWrite({
     address: POOL_CONTRACT_ADDRESS,
     abi: POOL_CONTRACT_ABI,
     functionName: 'withdraw',
     args: [asset.contractAddress, Number(amount) * 10 ** asset.decimals],
+    onError: (error) => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      setErrorMessage(errorObject?.cause?.reason)
+    }
   })
   const { write: withdraw, data: withdrawData } = useContractWrite(withdrawConfig);
-  const { isLoading: withdrawIsLoading, isError: withdrawIsError, isSuccess: withdrawIsSuccess } = useWaitForTransaction({
-    hash: withdrawData?.hash
+  const { isLoading: withdrawIsLoading } = useWaitForTransaction({
+    hash: withdrawData?.hash,
+    onSuccess: () => {
+      toast.success('Withdrawed.')
+      setErrorMessage('')
+      setVisible(false)
+    },
+    onError: error => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      setErrorMessage(errorObject?.cause?.reason)
+      toast.error(errorObject?.cause?.reason)
+    }
   })
 
   //  --------------------------------------------------------------------
@@ -86,32 +93,6 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
     return amount
   }, [amount])
 
-  //  The profit of the pool
-  const poolProfit = useMemo<number>(() => {
-    if (poolProfitInBigint) {
-      return Number(formatUnits(poolProfitInBigint, asset.decimals))
-    }
-    return 0
-  }, [poolProfitInBigint, asset])
-
-  //  Return true if profit < reward
-  const poolIsInsufficient = useMemo<boolean>(() => {
-    let reward = 0;
-    if (userInfo) {
-      if (asset.symbol === 'eth') {
-        reward = Number(formatEther(userInfo.ethRewardAmount))
-      } else {
-        reward = Number(formatUnits(userInfo.usdtRewardAmount, asset.decimals));
-      }
-      console.log('>>>>>>>>> poolProfit => ', poolProfit)
-      console.log('>>>>>>>>> reward => ', reward)
-      if (poolProfit < reward) {
-        return true
-      }
-    }
-    return false
-  }, [poolProfit, userInfo, asset])
-
   //  --------------------------------------------------------------------
 
   const handleAmount = (e: ChangeEvent<HTMLInputElement>) => {
@@ -134,22 +115,15 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
     setAmount(`${Number(value * maxAmount / 100).toFixed(6)}`)
   }
 
+  const handleWithdraw = () => {
+    if (withdraw) {
+      withdraw()
+    } else {
+      toast.error(errorMessage)
+    }
+  }
+
   //  --------------------------------------------------------------------
-
-  //  Ping error alert.
-  useEffect(() => {
-    if (withdrawIsError) {
-      toast.error('Withdraw has been failed.');
-    }
-  }, [withdrawIsError])
-
-  //  Ping alert and close dialog.
-  useEffect(() => {
-    if (withdrawIsSuccess) {
-      toast.success('Withdrawed.')
-      setVisible(false)
-    }
-  }, [withdrawIsSuccess])
 
   //  Get max withdrawable amount in USD.
   useEffect(() => {
@@ -210,9 +184,6 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
             <OutlinedButton className="text-xs px-2 py-1" onClick={handleMax}>max</OutlinedButton>
           </div>
         </div>
-        {poolIsInsufficient && (
-          <p className="text-red-500">You can't withdraw any fund since the profit of the pool is insufficient.</p>
-        )}
 
         <div className="mt-4 px-2">
           <Slider
@@ -248,8 +219,8 @@ export default function WithdrawTab({ asset, setVisible, balanceData, userInfo, 
 
         <FilledButton
           className="mt-8 py-2 text-base"
-          disabled={!withdrawPrepareIsSuccess || withdrawIsLoading}
-          onClick={() => withdraw?.()}
+          disabled={withdrawIsLoading}
+          onClick={handleWithdraw}
         >
           {withdrawIsLoading ? IN_PROGRESS : 'Withdraw'}
         </FilledButton>
