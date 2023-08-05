@@ -53,7 +53,7 @@ export default function ProfitSection({ ethPriceInUsd, usdcPriceInUsd }: IProps)
           <thead>
             <tr className="bg-gray-900">
               <Th label="Token" />
-              {/* <Th label="Profit" /> */}
+              <Th label="Profit" />
               {/* <Th label="Profit in USD" /> */}
               <Th label="Operation" />
             </tr>

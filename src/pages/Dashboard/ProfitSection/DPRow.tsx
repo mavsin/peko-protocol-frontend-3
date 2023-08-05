@@ -1,9 +1,9 @@
 import { useMemo } from "react";
-import { useContractRead } from "wagmi";
-import { formatUnits } from "viem";
+import { useBalance, useContractRead } from "wagmi";
+import { formatUnits, parseUnits } from "viem";
 import Td from "../../../components/tableComponents/Td";
 import { IAsset, IReturnValueOfAllowance } from "../../../utils/interfaces"
-import { POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS } from "../../../utils/constants";
+import { POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS } from "../../../utils/constants";
 import FilledButton from "../../../components/buttons/FilledButton";
 
 //  ---------------------------------------------------------------------------------------------
@@ -18,6 +18,32 @@ interface IProps {
 //  ---------------------------------------------------------------------------------------------
 
 export default function DPRow({ asset, ethPriceInUsd, usdcPriceInUsd, openDialog }: IProps) {
+  const { data: ethBalanceData } = useBalance({
+    address: POOL_CONTRACT_ADDRESS,
+    watch: true
+  })
+
+  const { data: usdcBalanceInBigint }: IReturnValueOfAllowance = useContractRead({
+    address: USDC_CONTRACT_ADDRESS,
+    abi: USDC_CONTRACT_ABI,
+    functionName: 'balanceOf',
+    args: [POOL_CONTRACT_ADDRESS],
+    watch: true
+  })
+
+  const profit = useMemo<number>(() => {
+    if (asset.symbol === 'eth') {
+      if (ethBalanceData) {
+        return Number(ethBalanceData.formatted)
+      }
+    } else if (asset.symbol === 'usdc') {
+      if (usdcBalanceInBigint) {
+        return Number(formatUnits(usdcBalanceInBigint, asset.decimals))
+      }
+    }
+    return 0
+  }, [asset, ethBalanceData, usdcBalanceInBigint])
+
   return (
     <tr>
       {/* Token */}
@@ -29,7 +55,7 @@ export default function DPRow({ asset, ethPriceInUsd, usdcPriceInUsd, openDialog
       </Td>
 
       {/* Profit */}
-      {/* <Td className="uppercase">{profit} {asset.symbol}</Td> */}
+      <Td className="uppercase">{profit.toFixed(6)} {asset.symbol}</Td>
 
       {/* Profit in USD */}
       {/* <Td>${profitInUsd.toFixed(2)}</Td> */}
