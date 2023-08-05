@@ -128,3 +128,8 @@ export interface IReturnValueOfAllowance {
   data?: bigint;
   [key: string]: any;
 }
+
+export interface IReturnValueOfOwner {
+  data?: string;
+  [key: string]: any;
+}

@@ -17,31 +17,6 @@ interface IProps {
 //  -------------------------------------------------------------------------------------------------------
 
 export default function MBRow({ asset, ethPriceInUsd, usdcPriceInUsd, openDialog }: IProps) {
-  const { data: profitInBigint }: IReturnValueOfAllowance = useContractRead({
-    address: POOL_CONTRACT_ADDRESS,
-    abi: POOL_CONTRACT_ABI,
-    functionName: 'getProfit',
-    args: [asset.contractAddress],
-    watch: true
-  })
-
-  //  ----------------------------------------------------------------------
-
-  const profit = useMemo<number>(() => {
-    if (profitInBigint) {
-      return Number(formatUnits(profitInBigint, asset.decimals))
-    }
-    return 0
-  }, [profitInBigint])
-
-  const profitInUsd = useMemo<number>(() => {
-    if (asset.symbol === 'eth') {
-      return profit * ethPriceInUsd
-    }
-    return profit * usdcPriceInUsd
-  }, [profit])
-
-  //  ----------------------------------------------------------------------
 
   return (
     <div className="flex flex-col gap-4 text-gray-100 border-b border-gray-800 pb-6">
@@ -55,21 +30,21 @@ export default function MBRow({ asset, ethPriceInUsd, usdcPriceInUsd, openDialog
       </div>
 
       {/* Profit */}
-      <div className="flex justify-between w-full">
+      {/* <div className="flex justify-between w-full">
         <span className="text-gray-500 font-bold">Profit: </span>
         <span>{profit} {asset.symbol}</span>
-      </div>
+      </div> */}
 
       {/* Profit in USD */}
-      <div className="flex justify-between w-full">
+      {/* <div className="flex justify-between w-full">
         <span className="text-gray-500 font-bold">Profit in USD: </span>
         <span>${profitInUsd.toFixed(2)}</span>
-      </div>
+      </div> */}
 
       <div className="flex justify-between w-full">
         <span className="text-gray-500 font-bold">Profit in USD: </span>
         <FilledButton onClick={() => openDialog(asset)}>
-          Claim
+          Withdraw
         </FilledButton>
       </div>
     </div>

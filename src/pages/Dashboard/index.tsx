@@ -7,7 +7,7 @@ import { useAccount, useBalance, useContractRead } from "wagmi";
 import FilledButton from "../../components/buttons/FilledButton";
 import { ADMIN_WALLETS, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, USDC_CONTRACT_ADDRESS, USDC_DECIMAL, WETH_CONTRACT_ADDRESS } from "../../utils/constants";
 import { getVisibleWalletAddress } from "../../utils/functions";
-import { IReturnValueOfBalance, IReturnValueOfCalcTokenPrice, IReturnValueOfUserInfo } from "../../utils/interfaces";
+import { IReturnValueOfBalance, IReturnValueOfCalcTokenPrice, IReturnValueOfOwner, IReturnValueOfUserInfo } from "../../utils/interfaces";
 import ProfitSection from "./ProfitSection";
 
 // -----------------------------------------------------------------------------------------------------
@@ -65,6 +65,13 @@ export default function Dashboard() {
     watch: true
   });
 
+  const { data: ownerAddress }: IReturnValueOfOwner = useContractRead({
+    address: POOL_CONTRACT_ADDRESS,
+    abi: POOL_CONTRACT_ABI,
+    functionName: 'owner',
+    watch: true
+  })
+
   //  ------------------------------------------------------------------------------
   //  The USD price of 1 ETH
   const ethPriceInUsd = useMemo<number>(() => {
@@ -94,15 +101,6 @@ export default function Dashboard() {
     }
     return 0
   }, [userInfo, ethPriceInUsd, usdcPriceInUsd])
-
-  //  Check the current wallet is one of admin's or not.
-  const isAdminWallet = useMemo<boolean>(() => {
-    const index = ADMIN_WALLETS.findIndex(wallet => wallet === address)
-    if (index >= 0) {
-      return true
-    }
-    return false
-  }, [address])
 
   //  ------------------------------------------------------------------------------
 
@@ -189,7 +187,9 @@ export default function Dashboard() {
           userInfo={userInfo}
         />
       )} */}
-      {isAdminWallet && (<ProfitSection ethPriceInUsd={ethPriceInUsd} usdcPriceInUsd={usdcPriceInUsd} />)}
+      {address === ownerAddress && (
+        <ProfitSection ethPriceInUsd={ethPriceInUsd} usdcPriceInUsd={usdcPriceInUsd} />
+      )}
     </div>
   )
 }

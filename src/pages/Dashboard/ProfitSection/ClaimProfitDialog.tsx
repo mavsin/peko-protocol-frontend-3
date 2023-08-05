@@ -1,12 +1,10 @@
 import { ChangeEvent, useMemo, useState } from "react";
-import Slider from "rc-slider";
-import { useContractRead, useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
+import { useContractWrite, usePrepareContractWrite, useWaitForTransaction } from "wagmi";
 import { toast } from "react-toastify";
-import { formatUnits, parseUnits } from "viem";
-import OutlinedButton from "../../../components/buttons/OutlinedButton";
+import { parseEther, parseUnits } from "viem";
 import CustomDialog from "../../../components/dialogs/CustomDialog";
 import MainInput from "../../../components/form/MainInput";
-import { IAsset, IPropsOfCustomDialog, IReturnValueOfAllowance } from "../../../utils/interfaces";
+import { IAsset, IPropsOfCustomDialog } from "../../../utils/interfaces";
 import FilledButton from "../../../components/buttons/FilledButton";
 import { IN_PROGRESS, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, REGEX_NUMBER_VALID } from "../../../utils/constants";
 
@@ -24,31 +22,50 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
   const [amount, setAmount] = useState<string>('0')
 
   //  ----------------------------------------------------------------------
-  //  Get Profit
-  const { data: profitInBigint }: IReturnValueOfAllowance = useContractRead({
-    address: POOL_CONTRACT_ADDRESS,
-    abi: POOL_CONTRACT_ABI,
-    functionName: 'getProfit',
-    args: [asset.contractAddress],
-    watch: true
-  })
+  // //  Get Profit
+  // const { data: profitInBigint }: IReturnValueOfAllowance = useContractRead({
+  //   address: POOL_CONTRACT_ADDRESS,
+  //   abi: POOL_CONTRACT_ABI,
+  //   functionName: 'getProfit',
+  //   args: [asset.contractAddress],
+  //   watch: true
+  // })
 
-  //  Claim Profit
-  const { config: configOfClaimProfit } = usePrepareContractWrite({
+  //  Claim ETH
+  const { config: configOfClaimETH } = usePrepareContractWrite({
     address: POOL_CONTRACT_ADDRESS,
     abi: POOL_CONTRACT_ABI,
-    functionName: 'claimProfit',
-    args: [asset.contractAddress, parseUnits(amount, asset.decimals)]
+    functionName: 'claimETH',
+    args: [parseEther(amount)]
   })
-  const { write: claimProfit, data: claimProfitData } = useContractWrite(configOfClaimProfit);
-  const { isLoading: claimProfitIsLoading } = useWaitForTransaction({
-    hash: claimProfitData?.hash,
+  const { write: claimETH, data: claimETHData } = useContractWrite(configOfClaimETH);
+  const { isLoading: claimETHIsLoading } = useWaitForTransaction({
+    hash: claimETHData?.hash,
     onSuccess: () => {
-      toast.success('Peko Claimed.')
+      toast.success('Withdrawed.')
       setVisible(false)
     },
     onError: () => {
-      toast.error('Claim occured error.')
+      toast.error('Withdraw occured error.')
+    }
+  })
+
+  //  Claim USDC
+  const { config: configOfClaimToken } = usePrepareContractWrite({
+    address: POOL_CONTRACT_ADDRESS,
+    abi: POOL_CONTRACT_ABI,
+    functionName: 'claimToken',
+    args: [asset.contractAddress, parseUnits(amount, asset.decimals)]
+  })
+  const { write: claimToken, data: claimTokenData } = useContractWrite(configOfClaimToken);
+  const { isLoading: claimTokenIsLoading } = useWaitForTransaction({
+    hash: claimTokenData?.hash,
+    onSuccess: () => {
+      toast.success('Withdrawed.')
+      setVisible(false)
+    },
+    onError: () => {
+      toast.error('Withdraw occured error.')
     }
   })
 
@@ -62,22 +79,19 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
     return amount
   }, [amount])
 
-  const maxAmount = useMemo<number>(() => {
-    if (profitInBigint) {
-      return Number(formatUnits(profitInBigint, asset.decimals))
-    }
-    return 0
-  }, [profitInBigint])
+  // const maxAmount = useMemo<number>(() => {
+  //   if (profitInBigint) {
+  //     return Number(formatUnits(profitInBigint, asset.decimals))
+  //   }
+  //   return 0
+  // }, [profitInBigint])
 
   const amountIsValid = useMemo<boolean>(() => {
-    if (Number(amount) > maxAmount) {
-      return false
-    }
     if (Number(amount) <= 0) {
       return false
     }
     return true
-  }, [amount, maxAmount])
+  }, [amount])
 
   //  ----------------------------------------------------------------------
 
@@ -89,17 +103,17 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
     }
   }
 
-  const handleMaxAmount = () => {
-    setAmount(maxAmount.toFixed(4))
-  }
+  // const handleMaxAmount = () => {
+  //   setAmount(maxAmount.toFixed(4))
+  // }
 
-  const handleHalfAmount = () => {
-    setAmount(`${(maxAmount / 2).toFixed(4)}`)
-  }
+  // const handleHalfAmount = () => {
+  //   setAmount(`${(maxAmount / 2).toFixed(4)}`)
+  // }
 
-  const handleSlider = (value: any) => {
-    setAmount(`${Number(value * maxAmount / 100).toFixed(4)}`)
-  }
+  // const handleSlider = (value: any) => {
+  //   setAmount(`${Number(value * maxAmount / 100).toFixed(4)}`)
+  // }
 
   //  ----------------------------------------------------------------------
 
@@ -113,7 +127,7 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
             value={amountInNumberType}
           />
 
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             <p className="text-gray-500">Max: {maxAmount.toFixed(asset.decimals)}<span className="uppercase">{asset.symbol}</span></p>
             <div className="flex items-center gap-2">
               <OutlinedButton className="text-xs px-2 py-1" onClick={handleHalfAmount}>half</OutlinedButton>
@@ -136,16 +150,26 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
               value={Number(amount) / maxAmount * 100}
               onChange={handleSlider}
             />
-          </div>
+          </div> */}
         </div>
 
-        <FilledButton
-          className="py-2 text-base"
-          disabled={!amountIsValid || !claimProfit || claimProfitIsLoading}
-          onClick={() => claimProfit?.()}
-        >
-          {claimProfitIsLoading ? IN_PROGRESS : 'Claim'}
-        </FilledButton>
+        {asset.symbol === 'eth' ? (
+          <FilledButton
+            className="py-2 text-base"
+            disabled={!amountIsValid || !claimETH || claimETHIsLoading}
+            onClick={() => claimETH?.()}
+          >
+            {claimETHIsLoading ? IN_PROGRESS : 'Withdraw'}
+          </FilledButton>
+        ) : asset.symbol === 'usdc' ? (
+          <FilledButton
+            className="py-2 text-base"
+            disabled={!amountIsValid || !claimToken || claimTokenIsLoading}
+            onClick={() => claimETH?.()}
+          >
+            {claimTokenIsLoading ? IN_PROGRESS : 'Withdraw'}
+          </FilledButton>
+        ) : (<></>)}
       </div>
     </CustomDialog>
   )

@@ -18,32 +18,6 @@ interface IProps {
 //  ---------------------------------------------------------------------------------------------
 
 export default function DPRow({ asset, ethPriceInUsd, usdcPriceInUsd, openDialog }: IProps) {
-  const { data: profitInBigint }: IReturnValueOfAllowance = useContractRead({
-    address: POOL_CONTRACT_ADDRESS,
-    abi: POOL_CONTRACT_ABI,
-    functionName: 'getProfit',
-    args: [asset.contractAddress],
-    watch: true
-  })
-
-  //  ----------------------------------------------------------------------
-
-  const profit = useMemo<number>(() => {
-    if (profitInBigint) {
-      return Number(formatUnits(profitInBigint, asset.decimals))
-    }
-    return 0
-  }, [profitInBigint])
-
-  const profitInUsd = useMemo<number>(() => {
-    if (asset.symbol === 'eth') {
-      return profit * ethPriceInUsd
-    }
-    return profit * usdcPriceInUsd
-  }, [profit])
-
-  //  ----------------------------------------------------------------------
-
   return (
     <tr>
       {/* Token */}
@@ -55,14 +29,14 @@ export default function DPRow({ asset, ethPriceInUsd, usdcPriceInUsd, openDialog
       </Td>
 
       {/* Profit */}
-      <Td className="uppercase">{profit} {asset.symbol}</Td>
+      {/* <Td className="uppercase">{profit} {asset.symbol}</Td> */}
 
       {/* Profit in USD */}
-      <Td>${profitInUsd.toFixed(2)}</Td>
+      {/* <Td>${profitInUsd.toFixed(2)}</Td> */}
 
       <Td>
         <FilledButton onClick={() => openDialog(asset)}>
-          Claim
+          Withdraw
         </FilledButton>
       </Td>
     </tr>
