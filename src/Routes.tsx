@@ -8,7 +8,7 @@ import { useAccount } from "wagmi";
 const LandingLayout = lazy(() => import('./layouts/LandingLayout'))
 const Lending = lazy(() => import('./pages/Lending'))
 const Liquidate = lazy(() => import('./pages/Liquidate'))
-const Swap = lazy(() => import('./pages/Swap'))
+// const Swap = lazy(() => import('./pages/Swap'))
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 // const Bridge = lazy(() => import('./pages/Bridge'))
 // const Trading = lazy(() => import('./pages/Trading'))
