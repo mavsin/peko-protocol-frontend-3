@@ -14,22 +14,15 @@ interface IProps extends IPropsOfCustomDialog {
   visible: boolean;
   setVisible: Function;
   asset: IAsset;
+  maxAmount: number;
 }
 
 //  -------------------------------------------------------------------------------------------
 
-export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps) {
+export default function ClaimProfitDialog({ visible, setVisible, asset, maxAmount }: IProps) {
   const [amount, setAmount] = useState<string>('0')
 
   //  ----------------------------------------------------------------------
-  // //  Get Profit
-  // const { data: profitInBigint }: IReturnValueOfAllowance = useContractRead({
-  //   address: POOL_CONTRACT_ADDRESS,
-  //   abi: POOL_CONTRACT_ABI,
-  //   functionName: 'getProfit',
-  //   args: [asset.contractAddress],
-  //   watch: true
-  // })
 
   //  Claim ETH
   const { config: configOfClaimETH } = usePrepareContractWrite({
@@ -79,19 +72,12 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
     return amount
   }, [amount])
 
-  // const maxAmount = useMemo<number>(() => {
-  //   if (profitInBigint) {
-  //     return Number(formatUnits(profitInBigint, asset.decimals))
-  //   }
-  //   return 0
-  // }, [profitInBigint])
-
   const amountIsValid = useMemo<boolean>(() => {
-    if (Number(amount) <= 0) {
+    if (Number(amount) <= 0 || Number(amount) > maxAmount) {
       return false
     }
     return true
-  }, [amount])
+  }, [amount, maxAmount])
 
   //  ----------------------------------------------------------------------
 
@@ -102,18 +88,6 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
       setAmount(value);
     }
   }
-
-  // const handleMaxAmount = () => {
-  //   setAmount(maxAmount.toFixed(4))
-  // }
-
-  // const handleHalfAmount = () => {
-  //   setAmount(`${(maxAmount / 2).toFixed(4)}`)
-  // }
-
-  // const handleSlider = (value: any) => {
-  //   setAmount(`${Number(value * maxAmount / 100).toFixed(4)}`)
-  // }
 
   //  ----------------------------------------------------------------------
 
@@ -127,15 +101,15 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
             value={amountInNumberType}
           />
 
-          {/* <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
             <p className="text-gray-500">Max: {maxAmount.toFixed(asset.decimals)}<span className="uppercase">{asset.symbol}</span></p>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <OutlinedButton className="text-xs px-2 py-1" onClick={handleHalfAmount}>half</OutlinedButton>
               <OutlinedButton className="text-xs px-2 py-1" onClick={handleMaxAmount}>max</OutlinedButton>
-            </div>
+            </div> */}
           </div>
 
-          <div className="mt-4 px-2">
+          {/* <div className="mt-4 px-2">
             <Slider
               marks={{
                 0: '0%',

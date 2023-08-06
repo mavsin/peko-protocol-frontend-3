@@ -1,5 +1,5 @@
 import { lazy, useState } from "react";
-import { useMediaQuery } from "react-responsive";
+// import { useMediaQuery } from "react-responsive";
 import { useNetwork } from "wagmi";
 import { toast } from "react-toastify";
 import Section from "../../../components/Section";
@@ -27,14 +27,16 @@ const chainId = process.env.REACT_APP_CHAIN_ID
 //  ---------------------------------------------------------------------------------------------
 
 export default function ProfitSection({ ethPriceInUsd, usdcPriceInUsd }: IProps) {
-  const isMobile = useMediaQuery({ maxWidth: 640 })
+  // const isMobile = useMediaQuery({ maxWidth: 640 })
   const { chain } = useNetwork()
 
   const [dialogVisible, setDialogVisible] = useState<boolean>(false)
   const [assetToBeClaimed, setAssetToBeClaimed] = useState<IAsset>(ASSETS[0])
+  const [profit, setProfit] = useState<number>(0)
 
-  const openDialog = (asset: IAsset) => {
+  const openDialog = (asset: IAsset, _profit: number) => {
     if (chain?.id === Number(chainId)) {
+      setProfit(_profit)
       setAssetToBeClaimed(asset)
       setDialogVisible(true)
     } else {
@@ -44,37 +46,32 @@ export default function ProfitSection({ ethPriceInUsd, usdcPriceInUsd }: IProps)
 
   return (
     <Section title="Profit">
-      {isMobile ? (
-        <div className="flex flex-col gap-4">
-
-        </div>
-      ) : (
-        <Table>
-          <thead>
-            <tr className="bg-gray-900">
-              <Th label="Token" />
-              <Th label="Profit" />
-              {/* <Th label="Profit in USD" /> */}
-              <Th label="Operation" />
-            </tr>
-          </thead>
-          <tbody>
-            {ASSETS.map(asset => (
-              <DPRow
-                key={asset.id}
-                asset={asset}
-                ethPriceInUsd={ethPriceInUsd}
-                usdcPriceInUsd={usdcPriceInUsd}
-                openDialog={openDialog}
-              />
-            ))}
-          </tbody>
-        </Table>
-      )}
+      <Table>
+        <thead>
+          <tr className="bg-gray-900">
+            <Th label="Token" />
+            <Th label="Profit" />
+            {/* <Th label="Profit in USD" /> */}
+            <Th label="Operation" />
+          </tr>
+        </thead>
+        <tbody>
+          {ASSETS.map(asset => (
+            <DPRow
+              key={asset.id}
+              asset={asset}
+              ethPriceInUsd={ethPriceInUsd}
+              usdcPriceInUsd={usdcPriceInUsd}
+              openDialog={openDialog}
+            />
+          ))}
+        </tbody>
+      </Table>
       <ClaimProfitDialog
         visible={dialogVisible}
         setVisible={setDialogVisible}
         asset={assetToBeClaimed}
+        maxAmount={profit}
       />
     </Section>
   )

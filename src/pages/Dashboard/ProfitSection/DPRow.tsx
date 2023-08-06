@@ -12,7 +12,7 @@ interface IProps {
   asset: IAsset;
   ethPriceInUsd: number;
   usdcPriceInUsd: number;
-  openDialog: Function;
+  openDialog: (asset: IAsset, profit: number) => void;
 }
 
 //  ---------------------------------------------------------------------------------------------
@@ -61,7 +61,7 @@ export default function DPRow({ asset, ethPriceInUsd, usdcPriceInUsd, openDialog
       {/* <Td>${profitInUsd.toFixed(2)}</Td> */}
 
       <Td>
-        <FilledButton onClick={() => openDialog(asset)}>
+        <FilledButton onClick={() => openDialog(asset, profit)}>
           Withdraw
         </FilledButton>
       </Td>
