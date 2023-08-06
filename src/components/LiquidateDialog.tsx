@@ -54,7 +54,6 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
     value: parseEther(`${ethAmountToPay}`),
     onError: (error) => {
       const errorObject = JSON.parse(JSON.stringify(error))
-      console.log('>>>>>>>>>> errorObject => ', errorObject)
       if (errorObject.cause) {
         setErrorMessage(errorObject.cause.reason)
       }
@@ -92,9 +91,8 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
     hash: approveData?.hash,
     onSuccess: () => {
       setTimeout(async () => {
-        const resultOfRePrepare = await rePrepareLiquidate()
+        await rePrepareLiquidate()
 
-        console.log('>>>>>>>>>>> resultOfRePrepare => ', resultOfRePrepare)
         if (liquidate) {
           liquidate()
         } else {
@@ -155,11 +153,9 @@ export default function LiquidateDialog({ visible, setVisible, closeLiquidateDia
   useEffect(() => {
     if (liquidation) {
       setEthAmountToPay(Number(formatEther(liquidation.ethBorrowAmount + liquidation.ethInterestAmount)) / 0.9999)
-      if (Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) === 0) {
-        setUsdcAmountToPay(Number((Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) / 0.9999).toFixed(6)))
-      } else {
-        setUsdcAmountToPay(Number((Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) / 0.9999).toFixed(6)))
-      }
+      setUsdcAmountToPay(Number((Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) / 0.9999).toFixed(6)))
+      console.log('>>>>>>>>>>> usdcAmountToPay => ', Number((Number(formatUnits(liquidation.usdtBorrowAmount + liquidation.usdtInterestAmount, USDC_DECIMAL)) / 0.9999)))
+
       setEthAmountToGetPaid(Number(formatEther(liquidation.ethDepositAmount + liquidation.ethRewardAmount)))
       setUsdcAmountToGetPaid(Number(formatUnits(liquidation.usdtDepositAmount + liquidation.usdtRewardAmount, USDC_DECIMAL)))
     }

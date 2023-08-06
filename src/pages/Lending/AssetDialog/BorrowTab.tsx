@@ -40,7 +40,18 @@ export default function BorrowTab({ asset, setVisible, balanceData, userInfo, po
     args: [asset.contractAddress, Number(amount) * 10 ** asset.decimals],
     onError: (error) => {
       const errorObject = JSON.parse(JSON.stringify(error))
-      setErrorMessage(errorObject?.cause?.reason)
+      console.log('>>>>>>>>>> errorObject => ', errorObject)
+      if (errorObject) {
+        if (errorObject.cause) {
+          if (errorObject.cause.reason) {
+            return setErrorMessage(errorObject.cause.reason)
+          }
+        }
+
+        if (errorObject.shortMessage) {
+          return setErrorMessage(errorObject.shortMessage)
+        }
+      }
     }
   })
   const { write: borrow, data: borrowData } = useContractWrite(borrowConfig)
@@ -53,8 +64,12 @@ export default function BorrowTab({ asset, setVisible, balanceData, userInfo, po
     },
     onError: (error) => {
       const errorObject = JSON.parse(JSON.stringify(error))
-      setErrorMessage(errorObject?.cause?.reason)
-      toast.error(errorObject?.cause?.reason)
+      if (errorObject) {
+        if (errorObject.cause) {
+          setErrorMessage(errorObject.cause.reason)
+          toast.error(errorObject.cause.reason)
+        }
+      }
     }
   })
 

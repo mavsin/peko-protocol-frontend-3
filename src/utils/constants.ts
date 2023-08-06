@@ -102,7 +102,7 @@ export const REGEX_NUMBER_VALID = /^[0-9]*\.?[0-9]*$/;
 
 //  Pool Info
 export const POOL_CONTRACT_ADDRESS =
-  "0x5ca1bb694a6e898a960f614e4ec551c08a316e43";
+  "0xf3a65674682a8f1cdfa239ab3c4eb77a88e5e11a";
 export const POOL_CONTRACT_ABI = [
   {
     inputs: [
@@ -1198,7 +1198,7 @@ export const USDC_DECIMAL = 6;
 
 //  Peko info
 export const PEKO_CONTRACT_ADDRESS =
-  "0xe73A423a55528245FB1bD183Fa73Af75979cFAeE";
+  "0x00251891cC56ea878bcAE077aECD499Fbb6F7594";
 export const PEKO_DECIMAL = 6;
 export const PEKO_CONTRACT_ABI = [
   {

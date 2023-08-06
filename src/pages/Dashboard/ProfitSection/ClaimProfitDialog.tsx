@@ -165,7 +165,7 @@ export default function ClaimProfitDialog({ visible, setVisible, asset }: IProps
           <FilledButton
             className="py-2 text-base"
             disabled={!amountIsValid || !claimToken || claimTokenIsLoading}
-            onClick={() => claimETH?.()}
+            onClick={() => claimToken?.()}
           >
             {claimTokenIsLoading ? IN_PROGRESS : 'Withdraw'}
           </FilledButton>

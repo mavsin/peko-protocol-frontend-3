@@ -26,6 +26,7 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
   const [moreInfoCollapsed, setMoreInfoCollapsed] = useState<boolean>(false)
   const [maxAmount, setMaxAmount] = useState<string>('0');
   const [loading, setLoading] = useState<boolean>(false)
+  const [errorMessage, setErrorMessage] = useState<string>('')
 
   //  --------------------------------------------------------------------------
 
@@ -45,14 +46,20 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
         if (repay) {
           repay()
         } else {
-          toast.warn(`Please approve ${maxAmount} USDC.`)
+          toast.error(errorMessage)
           setLoading(false)
         }
       }, DELAY_TIME)
     },
-    onError: () => {
-      setLoading(false)
-      toast.error('Approve occured error.')
+    onError: (error) => {
+      if (error.cause) {
+        const errorObject = JSON.parse(JSON.stringify(error.cause))
+        if (errorObject.reason) {
+          setErrorMessage(errorObject.reason)
+          setLoading(false)
+          toast.error(errorObject.reason)
+        }
+      }
     }
   })
 
@@ -62,7 +69,15 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
     abi: POOL_CONTRACT_ABI,
     functionName: 'repay',
     args: [asset.contractAddress, parseUnits(amount, asset.decimals)],
-    value: asset.symbol === 'eth' ? parseEther(`${Number(amount)}`) : parseEther('0')
+    value: asset.symbol === 'eth' ? parseEther(`${Number(amount)}`) : parseEther('0'),
+    onError: (error) => {
+      if (error.cause) {
+        const errorObject = JSON.parse(JSON.stringify(error.cause))
+        if (errorObject.reason) {
+          setErrorMessage(errorObject.reason)
+        }
+      }
+    }
   })
   const { write: repay, data: repayData } = useContractWrite({ ...repayConfig, onError: () => { setLoading(false) } })
   useWaitForTransaction({
@@ -72,9 +87,23 @@ export default function RepayTab({ asset, setVisible, balanceData, userInfo }: I
       setLoading(false)
       setVisible(false)
     },
-    onError: () => {
-      setLoading(false)
-      toast.error('Repaying occured error')
+    onError: (error) => {
+      const errorObject = JSON.parse(JSON.stringify(error))
+      if (errorObject) {
+        if (errorObject.cause) {
+          if (errorObject.cause.reason) {
+            setErrorMessage(errorObject.cause.reason)
+            setLoading(false)
+            return toast.error(errorObject.cause.reason)
+          }
+        }
+
+        if (errorObject.shortMessage) {
+          setErrorMessage(errorObject.shortMessage)
+          setLoading(false)
+          return toast.error(errorObject.shortMessage)
+        }
+      }
     }
   })
 

@@ -156,7 +156,9 @@ export default function Lending() {
 
       setTotalMarketSizeInUsd(_totalMarketSizeInUsd);
       setTotalBorrowedInUsd(_totalBorrowedInUsd);
-      setLentOut(_totalBorrowedInUsd / _totalMarketSizeInUsd * 100)
+      if (_totalMarketSizeInUsd > 0) {
+        setLentOut(_totalBorrowedInUsd / _totalMarketSizeInUsd * 100)
+      }
     }
   }, [marketInfo])
 

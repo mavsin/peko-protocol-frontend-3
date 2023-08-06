@@ -7,7 +7,7 @@ import Th from "../../../components/tableComponents/Th";
 import Section from "../../../components/Section";
 import Td from "../../../components/tableComponents/Td";
 import { IUserInfo } from "../../../utils/interfaces";
-import { ERROR_MESSAGE_OF_CLAIM_PEKO, MESSAGE_SWITCH_NETWORK, PEKO_CONTRACT_ADDRESS, PEKO_DECIMAL, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS } from "../../../utils/constants";
+import { ERROR_MESSAGE_OF_CLAIM_PEKO, IN_PROGRESS, MESSAGE_SWITCH_NETWORK, PEKO_CONTRACT_ADDRESS, PEKO_DECIMAL, POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS } from "../../../utils/constants";
 import FilledButton from "../../../components/buttons/FilledButton";
 // import ClaimPekoDialog from "./ClaimPekoDialog";
 
@@ -150,7 +150,7 @@ export default function PekoSection({ userInfo }: IProps) {
                   disabled={!claimPeko || claimPekoIsLoading}
                   onClick={() => claimPeko?.()}
                 >
-                  Claim
+                  {claimPekoIsLoading ? IN_PROGRESS : 'Claim'}
                 </FilledButton>
               </Td>
             </tr>
