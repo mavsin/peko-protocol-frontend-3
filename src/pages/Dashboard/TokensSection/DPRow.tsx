@@ -20,12 +20,23 @@ export default function DPRow({ asset, ethPriceInUsd, usdcPriceInUsd }: IProps) 
   //  Balance data
   const { data: balanceData }: IReturnValueOfBalance = useBalance({
     address,
-    token: asset.symbol === 'usdc' ? USDC_CONTRACT_ADDRESS : undefined
+    token: asset.symbol === 'usdc' ? USDC_CONTRACT_ADDRESS : undefined,
+    watch: true
   })
 
   const balanceInUsd = useMemo<number>(() => {
     if (balanceData) {
       return Number(balanceData.formatted) * (asset.symbol === 'eth' ? ethPriceInUsd : usdcPriceInUsd);
+    }
+    return 0
+  }, [balanceData, ethPriceInUsd, usdcPriceInUsd, asset])
+
+
+  const balance = useMemo<number>(() => {
+    if (balanceData) {
+      if (balanceData.formatted) {
+        return Number(balanceData.formatted)
+      }
     }
     return 0
   }, [balanceData])
@@ -39,7 +50,7 @@ export default function DPRow({ asset, ethPriceInUsd, usdcPriceInUsd }: IProps) 
         </div>
       </Td>
       <Td className="uppercase">
-        {Number(balanceData?.formatted).toFixed(4)} {asset.symbol}
+        {balance.toFixed(6)} {asset.symbol}
       </Td>
       <Td>
         $ {asset.symbol === 'eth' ? ethPriceInUsd.toFixed(2) : usdcPriceInUsd.toFixed(2)}
