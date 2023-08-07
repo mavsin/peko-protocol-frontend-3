@@ -1492,7 +1492,7 @@ export const ADMIN_WALLETS = [
 ];
 export const NUMBER_OF_LIQUIDATIONS_PER_PAGE = 100;
 export const DEFAULT_LTV = 0.8;
-export const MESSAGE_SWITCH_NETWORK = "Please switch to Linea Goerli testnet.";
+export const MESSAGE_SWITCH_NETWORK = "Please switch to Linea Mainnet.";
 export const MESSAGE_RETRY_TX = "Please reopen the dialog and try again.";
 export const ERROR_MESSAGE_OF_CLAIM_PEKO =
   "BEP20: transfer amount exceeds balance";
