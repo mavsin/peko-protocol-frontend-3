@@ -102,7 +102,7 @@ export const REGEX_NUMBER_VALID = /^[0-9]*\.?[0-9]*$/;
 
 //  Pool Info
 export const POOL_CONTRACT_ADDRESS =
-  "0xf3a65674682a8f1cdfa239ab3c4eb77a88e5e11a";
+  "0x12ed73ed56847207e604ef38f2aad9d5393318e8";
 export const POOL_CONTRACT_ABI = [
   {
     inputs: [
@@ -163,13 +163,6 @@ export const POOL_CONTRACT_ABI = [
   {
     inputs: [],
     name: "claimPeko",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function"
-  },
-  {
-    inputs: [{ internalType: "uint256", name: "amount", type: "uint256" }],
-    name: "claimRewardToken",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"
@@ -460,12 +453,28 @@ export const POOL_CONTRACT_ABI = [
   },
   {
     inputs: [
+      { internalType: "address", name: "_interfaceInterface", type: "address" }
+    ],
+    name: "setAggregatorInterface",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
       { internalType: "uint256", name: "_r0", type: "uint256" },
       { internalType: "uint256", name: "_uOption", type: "uint256" },
       { internalType: "uint256", name: "_rSlope1", type: "uint256" },
       { internalType: "uint256", name: "_rSlope2", type: "uint256" }
     ],
     name: "setBorrowApy",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [{ internalType: "address", name: "_ethAddress", type: "address" }],
+    name: "setEthAddress",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"
@@ -492,6 +501,15 @@ export const POOL_CONTRACT_ABI = [
       { internalType: "uint256", name: "_rSlope2", type: "uint256" }
     ],
     name: "setSupplyApy",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function"
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_usdcAddress", type: "address" }
+    ],
+    name: "setUsdcAddress",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function"
@@ -1198,7 +1216,7 @@ export const USDC_DECIMAL = 6;
 
 //  Peko info
 export const PEKO_CONTRACT_ADDRESS =
-  "0x00251891cC56ea878bcAE077aECD499Fbb6F7594";
+  "0xA7341B1948E94CE1eabD80c94fc3A53Add3Adc34";
 export const PEKO_DECIMAL = 6;
 export const PEKO_CONTRACT_ABI = [
   {
