@@ -28,8 +28,16 @@ export default function MBRow({ asset, ethPriceInUsd, usdcPriceInUsd }: IProps) 
       return Number(balanceData.formatted) * (asset.symbol === 'eth' ? ethPriceInUsd : usdcPriceInUsd);
     }
     return 0
-  }, [balanceData])
+  }, [balanceData, ethPriceInUsd, usdcPriceInUsd, asset])
 
+  const balance = useMemo<number>(() => {
+    if (balanceData) {
+      if (balanceData.formatted) {
+        return Number(balanceData.formatted)
+      }
+    }
+    return 0
+  }, [balanceData])
   //  ------------------------------------------------------------------------------------------
 
   return (
@@ -48,7 +56,7 @@ export default function MBRow({ asset, ethPriceInUsd, usdcPriceInUsd }: IProps) 
       {/* Balance */}
       <div className="flex justify-between w-full">
         <span className="text-gray-500 font-bold">Balance: </span>
-        <span>{Number(balanceData?.formatted).toFixed(4)} {asset.symbol}</span>
+        <span>{balance.toFixed(6)} {asset.symbol}</span>
       </div>
 
       {/* Price */}

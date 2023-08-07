@@ -536,7 +536,7 @@ export const POOL_CONTRACT_ABI = [
 
 //  USDC info
 export const USDC_CONTRACT_ADDRESS =
-  "0xf56dc6695cF1f5c364eDEbC7Dc7077ac9B586068";
+  "0x66627F389ae46D881773B7131139b2411980E09E";
 export const USDC_CONTRACT_ABI = [
   {
     anonymous: false,

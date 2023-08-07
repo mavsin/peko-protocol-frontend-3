@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { useBalance, useContractRead } from "wagmi";
-import { formatUnits, parseUnits } from "viem";
+import { formatUnits } from "viem";
 import Td from "../../../components/tableComponents/Td";
 import { IAsset, IReturnValueOfAllowance } from "../../../utils/interfaces"
-import { POOL_CONTRACT_ABI, POOL_CONTRACT_ADDRESS, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS } from "../../../utils/constants";
+import { POOL_CONTRACT_ADDRESS, USDC_CONTRACT_ABI, USDC_CONTRACT_ADDRESS } from "../../../utils/constants";
 import FilledButton from "../../../components/buttons/FilledButton";
 
 //  ---------------------------------------------------------------------------------------------
