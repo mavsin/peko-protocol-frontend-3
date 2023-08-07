@@ -1438,7 +1438,7 @@ export const PEKO_CONTRACT_ABI = [
 
 //  WETH info
 export const WETH_CONTRACT_ADDRESS =
-  "0x2C1b868d6596a18e32E61B901E4060C872647b6C";
+  "0xe5d7c2a44ffddf6b295a15c148167daaaf5cf34f";
 export const WETH_DECIMAL = 18;
 
 export const APY_DECIMAL = 2;
